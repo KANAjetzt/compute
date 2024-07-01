@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3 uid="uid://gxpe7ppxgr4q"]
+
+[ext_resource type="Script" path="res://springs.gd" id="1_to4ek"]
+[ext_resource type="Shader" path="res://springs.gdshader" id="2_2hvdi"]
+
+[sub_resource type="Texture2DRD" id="Texture2DRD_3mnte"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7d3cp"]
+shader = ExtResource("2_2hvdi")
+shader_parameter/circle_radius = 0.02
+shader_parameter/line_thickness = 0.005
+shader_parameter/show_debug = false
+shader_parameter/point_positions_texture = SubResource("Texture2DRD_3mnte")
+
+[node name="Springs" type="Node"]
+script = ExtResource("1_to4ek")
+
+[node name="Texture" type="ColorRect" parent="."]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_7d3cp")
+custom_minimum_size = Vector2(500, 500)
+offset_left = 300.0
+offset_top = 82.0
+offset_right = 800.0
+offset_bottom = 582.0

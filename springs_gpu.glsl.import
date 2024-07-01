@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://56verwp02e0s"
+path="res://.godot/imported/springs_gpu.glsl-4c8db05014784d109fc437fc89ee66fc.res"
+
+[deps]
+
+source_file="res://springs_gpu.glsl"
+dest_files=["res://.godot/imported/springs_gpu.glsl-4c8db05014784d109fc437fc89ee66fc.res"]
+
+[params]
+

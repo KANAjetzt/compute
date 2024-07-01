@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3 uid="uid://b8dhbrj1rrmvc"]
+
+[ext_resource type="Script" path="res://springs_gpu.gd" id="1_yffou"]
+[ext_resource type="Shader" path="res://springs_gpu.gdshader" id="2_cavof"]
+
+[sub_resource type="Texture2DRD" id="Texture2DRD_47wk0"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sd067"]
+shader = ExtResource("2_cavof")
+shader_parameter/point_current = 1.0
+shader_parameter/point_count = 5.0
+shader_parameter/point_size = 0.33
+shader_parameter/scale = 2.2
+shader_parameter/aspect_ratio = null
+shader_parameter/is_debug = false
+shader_parameter/is_draw_all = true
+shader_parameter/point_positions_texture = SubResource("Texture2DRD_47wk0")
+
+[node name="SpringsGpu" type="Node2D"]
+script = ExtResource("1_yffou")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="SpringTexture" type="ColorRect" parent="CanvasLayer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_sd067")
+custom_minimum_size = Vector2(500, 100)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

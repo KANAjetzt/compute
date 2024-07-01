@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3 uid="uid://rwtnvpx4km4x"]
+
+[ext_resource type="Script" path="res://springs_cpu.gd" id="1_luyq7"]
+
+[node name="SpringsCpu" type="Node2D"]
+script = ExtResource("1_luyq7")
+
+[node name="Points" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 5.0
+autostart = true
+
+[node name="Line2D" type="Line2D" parent="."]
+closed = true
+width = 2.0
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
