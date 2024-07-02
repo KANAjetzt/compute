@@ -4,8 +4,8 @@ var rd: RenderingDevice
 var shader: RID
 var pipeline: RID
 
-var data_buffer_A: RID
-var data_uniform_A: RDUniform
+var data_buffer: RID
+var data_uniform: RDUniform
 
 var data_buffer_B: RID
 var data_uniform_B: RDUniform
@@ -15,6 +15,8 @@ var texture_uniform: RDUniform
 
 var uniform_set_data: RID
 var uniform_set_texture: RID
+
+var applied_force: Vector2
 
 var points: Array[PointMass]
 var points_array := PackedFloat32Array()
@@ -159,13 +161,18 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if Input.is_action_pressed("force"):
+		applied_force = Vector2(0.1, 0.1)
+	else:
+		applied_force = Vector2(0.0, 0.0)
+	
 	if rd_texture_spring_positions:
 		rd_texture_spring_positions.texture_rd_rid = texture
 	
 	if %SpringTexture.material:
 		%SpringTexture.material.set_shader_parameter("aspect_ratio", get_viewport_rect().size.x / get_viewport_rect().size.y)
 	
-	RenderingServer.call_on_render_thread(_render_process.bind())
+	RenderingServer.call_on_render_thread(_render_process.bind(applied_force))
 
 
 func _init_shader() -> void:
@@ -179,20 +186,12 @@ func _init_shader() -> void:
 	
 	# Setup Buffers
 	# Data Buffer A
-	var data_input_A := data_array.to_byte_array()
-	data_buffer_A = rd.storage_buffer_create(data_input_A.size(), data_input_A)
-	data_uniform_A = RDUniform.new()
-	data_uniform_A.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
-	data_uniform_A.binding = 0
-	data_uniform_A.add_id(data_buffer_A)
-	
-	# Data Buffer B
-	var data_input_B := data_array.to_byte_array()
-	data_buffer_B = rd.storage_buffer_create(data_input_B.size(), data_input_B)
-	data_uniform_B = RDUniform.new()
-	data_uniform_B.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
-	data_uniform_B.binding = 1
-	data_uniform_B.add_id(data_buffer_B)
+	var data_input := data_array.to_byte_array()
+	data_buffer = rd.storage_buffer_create(data_input.size(), data_input)
+	data_uniform = RDUniform.new()
+	data_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	data_uniform.binding = 0
+	data_uniform.add_id(data_buffer)
 	
 	# Create Texture
 	var texture_format := RDTextureFormat.new()
@@ -214,18 +213,22 @@ func _init_shader() -> void:
 	texture_uniform.add_id(texture)
 	
 	# Create Uniform Sets
-	uniform_set_data = rd.uniform_set_create([data_uniform_A, data_uniform_B], shader, 0)
+	uniform_set_data = rd.uniform_set_create([data_uniform], shader, 0)
 	uniform_set_texture = rd.uniform_set_create([texture_uniform], shader, 1)
 
 
-func _render_process() -> void:
+func _render_process(_applied_force: Vector2) -> void:
+	var push_constant := PackedFloat32Array()
+	push_constant.push_back(_applied_force.x)
+	push_constant.push_back(_applied_force.y)
+	# Mind the gap!
+	push_constant.push_back(0.0)
+	push_constant.push_back(0.0)
+	
 	var compute_list := rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
-	uniform_set_data = rd.uniform_set_create([data_uniform_A, data_uniform_B], shader, 0)
 	rd.compute_list_bind_uniform_set(compute_list, uniform_set_data, 0)
 	rd.compute_list_bind_uniform_set(compute_list, uniform_set_texture, 1)
+	rd.compute_list_set_push_constant(compute_list, push_constant.to_byte_array(), push_constant.size() * 4)
 	rd.compute_list_dispatch(compute_list, 1, 1, 1)
 	rd.compute_list_end()
-	
-	data_uniform_A.binding = (data_uniform_A.binding + 1) % 2
-	data_uniform_B.binding = (data_uniform_B.binding + 1) % 2

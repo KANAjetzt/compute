@@ -9,10 +9,10 @@
 shader = ExtResource("2_cavof")
 shader_parameter/point_current = 1.0
 shader_parameter/point_count = 5.0
-shader_parameter/point_size = 0.33
-shader_parameter/scale = 2.2
+shader_parameter/point_size = 0.1
+shader_parameter/scale = 0.47
 shader_parameter/aspect_ratio = null
-shader_parameter/is_debug = false
+shader_parameter/is_debug = true
 shader_parameter/is_draw_all = true
 shader_parameter/point_positions_texture = SubResource("Texture2DRD_47wk0")
 
