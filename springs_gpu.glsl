@@ -2,12 +2,13 @@
 #version 450
 
 struct PointMass {
-	float id;
 	vec2 position;
 	vec2 velocity;
 	vec2 acceleration;
 	float inverse_mass;
 	float damping;
+	int id;
+	float res0;
 };
 
 struct Spring {
@@ -20,11 +21,15 @@ struct Spring {
 
 layout(local_size_x = 5) in;
 
-layout(set = 0, binding = 0, std430) buffer restrict Data {
-	PointMass point_masses[5];
-	Spring springs[5];
+layout(set = 0, binding = 0, std430) buffer restrict Springs {
+	Spring[] spring_values;
 }
-data;
+springs;
+
+layout(set = 0, binding = 1, std430) buffer restrict PointMasses {
+	PointMass[] point_mass_values;
+}
+point_masses;
 
 layout(push_constant, std430) uniform Params {
 	vec2 applied_force;
@@ -38,12 +43,12 @@ layout(r32f, set = 1, binding = 0) uniform restrict writeonly image2D output_ima
 void main() {
 	uint index = gl_GlobalInvocationID.x;
 
-	// Apply spring forces
-	if (index < 5) {  // Assuming you have 5 springs; adjust accordingly
-		Spring spring = data.springs[index];
+	if(index > 5) return;
 
-		PointMass end_1 = data.point_masses[spring.end_1];
-		PointMass end_2 = data.point_masses[spring.end_2];
+	Spring spring = springs.spring_values[index];
+
+	PointMass end_1 = point_masses.point_mass_values[spring.end_1];
+	PointMass end_2 = point_masses.point_mass_values[spring.end_2];
 
 		vec2 x = end_1.position - end_2.position;
 		float leng = length(x);
@@ -55,38 +60,26 @@ void main() {
 			dv = end_2.velocity - end_1.velocity;
 			force = spring.stiffness * x - dv * spring.damping;
 
-			data.point_masses[spring.end_1].acceleration += -force * end_1.inverse_mass;
-			data.point_masses[spring.end_2].acceleration += force * end_2.inverse_mass;
-		}
+		point_masses.point_mass_values[spring.end_1].acceleration += -force * end_1.inverse_mass;
+		point_masses.point_mass_values[spring.end_2].acceleration += force * end_2.inverse_mass;
 	}
 
-	// Synchronize to ensure all forces are applied before updating positions
 	barrier();
 
-	// Update point masses
-	if (index < 5) {  // Assuming you have 5 point masses; adjust accordingly
-		PointMass point = data.point_masses[index];
+	PointMass point = point_masses.point_mass_values[index];
 
-		// Apply external force if needed
-		if (index == 0) {
-				point.acceleration += params.applied_force * point.inverse_mass;
-		}
-
-		// Apply gravity
-		point.acceleration += vec2(0, 0.05) * point.inverse_mass;
-
-		// Symplectic Euler integration
-		point.velocity += point.acceleration;
-		point.position += point.velocity;
-		point.acceleration = vec2(0.0, 0.0);
-
-		// Apply damping
-		point.velocity *= point.damping;
-
-		// Update point mass data
-		data.point_masses[index] = point;
-
-		// Update position in texture for rendering
-		imageStore(output_image, ivec2(int(point.id), 0), vec4(point.position, 0.0, 1.0));
+	if (index == 2){
+		point.acceleration += params.applied_force * point.inverse_mass;
 	}
+
+	point.acceleration += vec2(0, 0.00) * point.inverse_mass;
+	point.velocity += point.acceleration;
+	point.position += point.velocity;
+	point.acceleration = vec2(0.0, 0.0);
+
+	point.velocity *= point.damping;
+
+	point_masses.point_mass_values[index] = point;
+
+	imageStore(output_image, ivec2(index, 0), vec4(point.position, point.id, 1.0));
 }

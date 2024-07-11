@@ -111,6 +111,9 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if Input.is_action_pressed("force"):
+		points[0].apply_force(Vector2(0.01, 0.0))
+	
 	for spring in springs:
 		spring.update()
 	

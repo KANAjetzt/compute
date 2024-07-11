@@ -4,11 +4,11 @@ var rd: RenderingDevice
 var shader: RID
 var pipeline: RID
 
-var data_buffer: RID
-var data_uniform: RDUniform
+var data_springs_buffer: RID
+var data_springs_uniform: RDUniform
 
-var data_buffer_B: RID
-var data_uniform_B: RDUniform
+var data_point_masses_buffer: RID
+var data_point_masses_uniform: RDUniform
 
 var texture: RID
 var texture_uniform: RDUniform
@@ -48,7 +48,6 @@ class PointMass:
 	
 	func get_as_array() -> PackedFloat32Array:
 		var data := PackedFloat32Array()
-		data.push_back(id)
 		data.push_back(position.x)
 		data.push_back(position.y)
 		data.push_back(velocity.x)
@@ -57,29 +56,10 @@ class PointMass:
 		data.push_back(acceleration.y)
 		data.push_back(inverse_mass)
 		data.push_back(damping)
+		data.push_back(id)
+		data.push_back(0.0)
 		
 		return data
-	
-	# Translates positions from 0-1 range to screen size pixels
-	# TODO: This has to be moved to the GPU
-	#func get_screen_position() -> Vector2:
-		#return Vector2(
-			#parent.get_viewport_rect().size.x * position.x,
-			#parent.get_viewport_rect().size.y * position.y,
-		#)
-	
-	# TODO: Move to GPU
-	#func update() -> void:
-		#acceleration += Vector2(0, 0.005) * inverse_mass
-		#velocity = velocity + acceleration
-		#position = position + velocity
-		#acceleration = Vector2.ZERO
-		#
-		#if is_zero_approx(velocity.length_squared()):
-			#velocity = Vector2.ZERO
-		#
-		#velocity = velocity * damping
-		#damping = 1.00
 
 
 class Spring:
@@ -108,24 +88,6 @@ class Spring:
 		data.push_back(damping)
 		
 		return data
-	
-	# TODO: Move to GPU
-	#func update() -> void:
-		#var x := end_1.position - end_2.position
-		#var length := x.length()
-		#var dv := Vector2.ZERO
-		#var force := Vector2.ZERO
-		#
-		## Springs can only pull, not push
-		#if length <= target_length:
-			#return
-		#
-		#x = (x / length) * (length - target_length)
-		#dv = end_2.velocity - end_1.velocity
-		#force = stiffness * x - dv * damping
-		#
-		#end_1.apply_force(-force)
-		#end_2.apply_force(force)
 
 
 func _ready() -> void:
@@ -149,10 +111,6 @@ func _ready() -> void:
 		
 	for spring in springs:
 		springs_array.append_array(spring.get_as_array())
-		
-	data_array.append_array(points_array)
-	data_array.append_array(springs_array)
-	
 	
 	if %SpringTexture.material:
 		rd_texture_spring_positions = %SpringTexture.material.get_shader_parameter("point_positions_texture")
@@ -162,7 +120,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if Input.is_action_pressed("force"):
-		applied_force = Vector2(0.1, 0.1)
+		applied_force = Vector2(0.01, 0.0)
 	else:
 		applied_force = Vector2(0.0, 0.0)
 	
@@ -185,13 +143,21 @@ func _init_shader() -> void:
 	pipeline = rd.compute_pipeline_create(shader)
 	
 	# Setup Buffers
-	# Data Buffer A
-	var data_input := data_array.to_byte_array()
-	data_buffer = rd.storage_buffer_create(data_input.size(), data_input)
-	data_uniform = RDUniform.new()
-	data_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
-	data_uniform.binding = 0
-	data_uniform.add_id(data_buffer)
+	# Data Buffer Springs
+	var data_springs_input := springs_array.to_byte_array()
+	data_springs_buffer = rd.storage_buffer_create(data_springs_input.size(), data_springs_input)
+	data_springs_uniform = RDUniform.new()
+	data_springs_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	data_springs_uniform.binding = 0
+	data_springs_uniform.add_id(data_springs_buffer)
+	
+	# Data Buffer Point Masses
+	var data_point_masses_input := points_array.to_byte_array()
+	data_point_masses_buffer = rd.storage_buffer_create(data_point_masses_input.size(), data_point_masses_input)
+	data_point_masses_uniform = RDUniform.new()
+	data_point_masses_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	data_point_masses_uniform.binding = 1
+	data_point_masses_uniform.add_id(data_point_masses_buffer)
 	
 	# Create Texture
 	var texture_format := RDTextureFormat.new()
@@ -213,7 +179,7 @@ func _init_shader() -> void:
 	texture_uniform.add_id(texture)
 	
 	# Create Uniform Sets
-	uniform_set_data = rd.uniform_set_create([data_uniform], shader, 0)
+	uniform_set_data = rd.uniform_set_create([data_springs_uniform, data_point_masses_uniform], shader, 0)
 	uniform_set_texture = rd.uniform_set_create([texture_uniform], shader, 1)
 
 
