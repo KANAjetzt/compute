@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://b6btavqkflxyc"]
+
+[ext_resource type="PackedScene" uid="uid://rwtnvpx4km4x" path="res://springs_cpu.tscn" id="1_6swmq"]
+[ext_resource type="PackedScene" uid="uid://b8dhbrj1rrmvc" path="res://springs_gpu.tscn" id="2_3bki7"]
+
+[node name="Combo" type="Node2D"]
+
+[node name="SpringsCpu" parent="." instance=ExtResource("1_6swmq")]
+
+[node name="SpringsGpu" parent="." instance=ExtResource("2_3bki7")]
