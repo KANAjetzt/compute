@@ -30,7 +30,7 @@ var rd_texture_spring_positions: Texture2DRD
 
 
 class PointMass:
-	var id: int
+	var id: float
 	var position: Vector2
 	var velocity: Vector2
 	var acceleration: Vector2
@@ -38,7 +38,7 @@ class PointMass:
 	var damping := 1.00
 	var parent: Node2D
 	
-	func _init(_id: int, _position: Vector2, _inverse_mass: float) -> void:
+	func _init(_id: float, _position: Vector2, _inverse_mass: float) -> void:
 		id = _id
 		position = _position
 		inverse_mass = _inverse_mass
@@ -48,6 +48,7 @@ class PointMass:
 	
 	func get_as_array() -> PackedFloat32Array:
 		var data := PackedFloat32Array()
+		data.push_back(id)
 		data.push_back(position.x)
 		data.push_back(position.y)
 		data.push_back(velocity.x)
@@ -56,8 +57,6 @@ class PointMass:
 		data.push_back(acceleration.y)
 		data.push_back(inverse_mass)
 		data.push_back(damping)
-		data.push_back(id)
-		data.push_back(0.0)
 		
 		return data
 
@@ -92,11 +91,11 @@ class Spring:
 
 func _ready() -> void:
 	points = [
-		PointMass.new(0, Vector2(0.1, 0.5), 1.0),
-		PointMass.new(1, Vector2(0.5, 0.3), 1.0),
-		PointMass.new(2, Vector2(0.9, 0.5), 1.0),
-		PointMass.new(3, Vector2(0.9, 0.1), 0.0),
-		PointMass.new(4, Vector2(0.1, 0.1), 0.0),
+		PointMass.new(0.0, Vector2(0.1, 0.5), 1.0),
+		PointMass.new(1.0, Vector2(0.5, 0.3), 1.0),
+		PointMass.new(2.0, Vector2(0.9, 0.5), 1.0),
+		PointMass.new(3.0, Vector2(0.9, 0.1), 0.0),
+		PointMass.new(4.0, Vector2(0.1, 0.1), 0.0),
 	]
 	springs = [
 		Spring.new(points[0], points[1], 0.6, 0.02),
@@ -120,7 +119,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if Input.is_action_pressed("force"):
-		applied_force = Vector2(0.01, 0.0)
+		applied_force = Vector2(0.0, -0.005)
 	else:
 		applied_force = Vector2(0.0, 0.0)
 	
@@ -162,12 +161,10 @@ func _init_shader() -> void:
 	# Create Texture
 	var texture_format := RDTextureFormat.new()
 	texture_format.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
+	#texture_format.format = RenderingDevice.DATA_FORMAT_R32G32_SFLOAT
 	texture_format.texture_type = RenderingDevice.TEXTURE_TYPE_2D
 	texture_format.width = 5
-	texture_format.height = 1
-	texture_format.depth = 1
-	texture_format.array_layers = 1
-	texture_format.mipmaps = 1
+	texture_format.height = 3
 	texture_format.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT + RenderingDevice.TEXTURE_USAGE_STORAGE_BIT + RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT + RenderingDevice.TEXTURE_USAGE_CAN_COPY_TO_BIT
 	
 	texture = rd.texture_create(texture_format, RDTextureView.new(), [])

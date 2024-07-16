@@ -1,8 +1,8 @@
 shader_type canvas_item;
 
 
-uniform sampler2D point_positions_texture;
-uniform float point_current: hint_range(1, 5, 1) = 1;
+uniform sampler2D point_positions_texture: filter_nearest;
+uniform float point_current: hint_range(0, 5, 1) = 0;
 uniform float point_count: hint_range(1, 5, 1) = 5;
 uniform float point_size: hint_range(0.01, 1.0, 0.01);
 uniform float scale: hint_range(0.01, 10.0, 0.01);
@@ -29,15 +29,17 @@ void fragment() {
 	
 	if (is_debug){
 		//output_color += texture(point_positions_texture, vec2(point_current / point_count, 1.0));
-		output_color.rg = point_position;
+		//output_color.rg = point_position;
+		//output_color = texture(point_positions_texture, vec2(point_current / point_count, 1.0));
+		output_color = texture(point_positions_texture, UV);
 	}
 	
 	if(is_draw_all){
 		for(float i = point_current; i <= point_count; i++){
-			vec2 point_position = texture(point_positions_texture, vec2( i / point_count, 0.5)).xy;
+			vec2 point_position = texture(point_positions_texture, vec2( i / point_count, 0.1)).xy;
 		
 			if(distance(vec2(UV.x * aspect_ratio, UV.y) * scale, point_position) < point_size){
-				output_color.b = 1.0;
+				output_color.b = i * 0.2;
 				output_color.a = 1.0;
 			}
 		}
