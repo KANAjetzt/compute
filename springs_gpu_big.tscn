@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3 uid="uid://duvn3vjq66r7b"]
+
+[ext_resource type="Script" path="res://springs_gpu_big.gd" id="1_lor64"]
+[ext_resource type="Shader" path="res://springs_gpu.gdshader" id="2_w52ia"]
+
+[sub_resource type="Texture2DRD" id="Texture2DRD_jg58s"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_al3km"]
+shader = ExtResource("2_w52ia")
+shader_parameter/point_current = 0.0
+shader_parameter/point_count = 400.0
+shader_parameter/point_size = 0.01
+shader_parameter/scale = 1.08
+shader_parameter/aspect_ratio = null
+shader_parameter/is_debug = false
+shader_parameter/is_draw_all = true
+shader_parameter/draw_background = true
+shader_parameter/point_positions_texture = SubResource("Texture2DRD_jg58s")
+
+[node name="SpringsGpuBig" type="Node2D"]
+script = ExtResource("1_lor64")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="SpringTexture" type="ColorRect" parent="CanvasLayer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_al3km")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

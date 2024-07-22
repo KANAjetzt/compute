@@ -21,7 +21,7 @@ struct Spring {
 	float damping;
 };
 
-layout(local_size_x = 5) in;
+layout(local_size_x = 60) in;
 
 layout(set = 0, binding = 0, std430) buffer restrict Springs {
 	Spring[] spring_values;
@@ -45,7 +45,7 @@ layout(r32f, set = 1, binding = 0) uniform restrict writeonly image2D output_ima
 void main() {
 	uint index = gl_GlobalInvocationID.x;
 
-	if(index > 5) return;
+	if(index > 180) return;
 
 	Spring spring = springs.spring_values[index];
 
@@ -60,7 +60,7 @@ void main() {
 		vec2 x = end_1_position - end_2_position;
 		float leng = length(x);
 		vec2 dv = vec2(0.0, 0.0);
-		vec2 force = vec2(0.0, 0.0) + vec2(0, 0.01);
+		vec2 force = vec2(0.0, 0.0);
 
 		if (leng > spring.target_length) {
 			x = (x / leng) * (leng - spring.target_length);
@@ -78,15 +78,15 @@ void main() {
 
 	PointMass point = point_masses.point_mass_values[index];
 
-	if (index == 1){
+	if (index == 28){
 		vec2 applied_acceleration = params.applied_force * point.inverse_mass;
 		point.acceleration_x += applied_acceleration.x;
 		point.acceleration_y += applied_acceleration.y;
 	}
 
-	vec2 applied_gravity = vec2(0, 0.001) * point.inverse_mass; 
-	point.acceleration_x += applied_gravity.x;
-	point.acceleration_y += applied_gravity.y;
+	// vec2 applied_gravity = vec2(0, 0.0) * point.inverse_mass; 
+	// point.acceleration_x += applied_gravity.x;
+	// point.acceleration_y += applied_gravity.y;
 	point.velocity_x += point.acceleration_x;
 	point.velocity_y += point.acceleration_y;
 	point.position_x += point.velocity_x;
@@ -97,8 +97,8 @@ void main() {
 
 	vec2 applied_damping = vec2(point.velocity_x, point.velocity_y) * point.damping;
 
-	point.velocity_x = applied_damping.x;
-	point.velocity_y = applied_damping.y;
+	point.velocity_x *= applied_damping.x;
+	point.velocity_y *= applied_damping.y;
 
 	point_masses.point_mass_values[index] = point;
 

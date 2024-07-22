@@ -1,5 +1,7 @@
 extends Node2D
 
+@export var grid_size := Vector2(6, 6)
+
 var rd: RenderingDevice
 var shader: RID
 var pipeline: RID
@@ -90,26 +92,56 @@ class Spring:
 
 
 func _ready() -> void:
-	points = [
-		PointMass.new(0.0, Vector2(0.1, 0.5), 1.0),
-		PointMass.new(1.0, Vector2(0.5, 0.3), 1.0),
-		PointMass.new(2.0, Vector2(0.9, 0.5), 1.0),
-		PointMass.new(3.0, Vector2(0.9, 0.1), 0.0),
-		PointMass.new(4.0, Vector2(0.1, 0.1), 0.0),
-	]
-	springs = [
-		Spring.new(points[0], points[1], 0.6, 0.02),
-		Spring.new(points[1], points[2], 0.6, 0.02),
-		Spring.new(points[2], points[3], 0.6, 0.02),
-		Spring.new(points[3], points[4], 0.6, 0.02),
-		Spring.new(points[4], points[0], 0.6, 0.02),
-	]
+	
+	# Create grid
+	# - fixed Points (inverse mass 1.0) on the edge of the grid
+	
+	var point_count := 0
+	var grid_spacing := Vector2(1 / grid_size.x, 1 / grid_size.y)
+	
+	for y in grid_size.y:
+		for x in grid_size.x:
+			# If on the edge of the grid, set a fixed point
+			if x == 0 or y == 0 or x == grid_size.x - 1 or y == grid_size.y - 1:
+				points.push_back(
+					PointMass.new(float(point_count), Vector2(grid_spacing.x * x, grid_spacing.y * y), 0.0)
+				)
+			elif int(x) % 3 == 0 && int(y) % 3 == 0:
+				points.push_back(
+					PointMass.new(float(point_count), Vector2(grid_spacing.x * x, grid_spacing.y * y), 0.0)
+				)
+			else:
+				points.push_back(
+					PointMass.new(float(point_count), Vector2(grid_spacing.x * x, grid_spacing.y * y), 1.0)
+				)
+				
+			point_count = point_count + 1
+	
+	for y in grid_size.y:
+		for x in grid_size.x:
+			# if it is not the first entry and not the last one connect the curent point with the last one
+			if x > 0:
+				# connect x axe
+				var current_row_index := (y * grid_size.x) + x
+				springs.push_back(
+					Spring.new(points[current_row_index - 1], points[current_row_index], 0.6, 0.02),
+				)
+			if y > 0:
+				var top_row_index := (y - 1) * grid_size.x + x
+				# connect y axe
+				springs.push_back(
+					Spring.new(points[x], points[top_row_index], 0.6, 0.02),
+				)
+	
+	print("Point size: %s" % points.size())
 	
 	for point in points:
 		points_array.append_array(point.get_as_array())
 		
 	for spring in springs:
 		springs_array.append_array(spring.get_as_array())
+	
+	print("Spring Size: %s" % springs.size())
 	
 	if %SpringTexture.material:
 		rd_texture_spring_positions = %SpringTexture.material.get_shader_parameter("point_positions_texture")
@@ -136,7 +168,7 @@ func _init_shader() -> void:
 	rd = RenderingServer.get_rendering_device()
 	
 	# Setup Shader
-	var shader_file: RDShaderFile = load("res://springs_gpu.glsl")
+	var shader_file: RDShaderFile = load("res://springs_gpu_big.glsl")
 	var shader_spirv: RDShaderSPIRV = shader_file.get_spirv()
 	shader = rd.shader_create_from_spirv(shader_spirv)
 	pipeline = rd.compute_pipeline_create(shader)
@@ -163,7 +195,7 @@ func _init_shader() -> void:
 	texture_format.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
 	#texture_format.format = RenderingDevice.DATA_FORMAT_R32G32_SFLOAT
 	texture_format.texture_type = RenderingDevice.TEXTURE_TYPE_2D
-	texture_format.width = 5
+	texture_format.width = grid_size.x * grid_size.y
 	texture_format.height = 1
 	texture_format.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT + RenderingDevice.TEXTURE_USAGE_STORAGE_BIT + RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT + RenderingDevice.TEXTURE_USAGE_CAN_COPY_TO_BIT
 	

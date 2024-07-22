@@ -7,14 +7,14 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sd067"]
 shader = ExtResource("2_cavof")
-shader_parameter/point_current = 0.0
+shader_parameter/point_current = 1.0
 shader_parameter/point_count = 5.0
-shader_parameter/point_size = 0.03
-shader_parameter/scale = 0.91
+shader_parameter/point_size = 0.01
+shader_parameter/scale = 0.84
 shader_parameter/aspect_ratio = null
 shader_parameter/is_debug = false
 shader_parameter/is_draw_all = true
-shader_parameter/draw_background = false
+shader_parameter/draw_background = true
 shader_parameter/point_positions_texture = SubResource("Texture2DRD_47wk0")
 
 [node name="SpringsGpu" type="Node2D"]
