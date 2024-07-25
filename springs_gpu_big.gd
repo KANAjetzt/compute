@@ -17,8 +17,6 @@ var data_point_masses_uniform: RDUniform
 var texture: RID
 var texture_uniform: RDUniform
 
-var uniform_set_data_0: RID
-var uniform_set_data_1: RID
 var uniform_set_texture: RID
 
 var applied_force: Vector2
@@ -222,18 +220,22 @@ func _init_shader() -> void:
 	texture_uniform.add_id(texture)
 	
 	# Create Uniform Sets
-	uniform_set_data_0 = rd.uniform_set_create([data_springs_uniform, data_point_masses_uniform], shader_0, 0)
-	uniform_set_data_1 = rd.uniform_set_create([data_point_masses_uniform], shader_1, 0)
 	uniform_set_texture = rd.uniform_set_create([texture_uniform], shader_1, 1)
 
 
 func _render_process(_applied_force: Vector2) -> void:
+	var uniform_set_data_0: RID
+	var uniform_set_data_1: RID
+	
 	var push_constant := PackedFloat32Array()
 	push_constant.push_back(_applied_force.x)
 	push_constant.push_back(_applied_force.y)
 	# Mind the gap!
 	push_constant.push_back(0.0)
 	push_constant.push_back(0.0)
+	
+	# Build Uniform Set 0
+	uniform_set_data_0 = rd.uniform_set_create([data_point_masses_uniform, data_springs_uniform], shader_0, 0)
 	
 	var compute_list := rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline_0)
@@ -242,6 +244,11 @@ func _render_process(_applied_force: Vector2) -> void:
 	rd.compute_list_dispatch(compute_list, ceil(springs.size() / 32), 1, 1)
 	rd.compute_list_end()
 	
+	rd.free_rid(uniform_set_data_0)
+	
+	# Build Uniform Set 1
+	uniform_set_data_1 = rd.uniform_set_create([data_point_masses_uniform], shader_1, 0)
+	
 	compute_list = rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline_1)
 	rd.compute_list_bind_uniform_set(compute_list, uniform_set_data_1, 0)
@@ -249,3 +256,5 @@ func _render_process(_applied_force: Vector2) -> void:
 	rd.compute_list_set_push_constant(compute_list, push_constant.to_byte_array(), push_constant.size() * 4)
 	rd.compute_list_dispatch(compute_list, ceil(point_count / 32), 1, 1)
 	rd.compute_list_end()
+	
+	rd.free_rid(uniform_set_data_1)
