@@ -8,9 +8,9 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_al3km"]
 shader = ExtResource("2_w52ia")
 shader_parameter/point_current = 0.0
-shader_parameter/point_count = 400.0
-shader_parameter/point_size = 0.01
-shader_parameter/scale = 1.08
+shader_parameter/point_count = 800.0
+shader_parameter/point_size = 0.016
+shader_parameter/scale = 9.27
 shader_parameter/aspect_ratio = null
 shader_parameter/is_debug = false
 shader_parameter/is_draw_all = true
